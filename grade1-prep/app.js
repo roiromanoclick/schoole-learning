@@ -272,6 +272,18 @@ if (typeof document !== 'undefined') {
     voice = vs.filter(isHe)[0] || null;
   };
   if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  // ----- הכנת טקסט להקראה: ניקוד לשמות האותיות, מספרים במילים, בלי אימוג׳י -----
+  const NIKUD = { 'אלף': 'אָלֶף', 'בית': 'בֵּית', 'גימל': 'גִּימֶל', 'דלת': 'דָּלֶת', 'הא': 'הֵא', 'וו': 'וָו', 'זין': 'זַיִן', 'חית': 'חֵית', 'טית': 'טֵית', 'יוד': 'יוֹד', 'כף': 'כַּף', 'למד': 'לָמֶד', 'מם': 'מֵם', 'נון': 'נוּן', 'סמך': 'סָמֶךְ', 'עין': 'עַיִן', 'פא': 'פֵּא', 'צדי': 'צָדִי', 'קוף': 'קוֹף', 'ריש': 'רֵישׁ', 'שין': 'שִׁין', 'תו': 'תָּו' };
+  const NUMW = ['אֶפֶס', 'אֶחָד', 'שְׁנַיִם', 'שְׁלוֹשָׁה', 'אַרְבָּעָה', 'חֲמִישָׁה', 'שִׁשָּׁה', 'שִׁבְעָה', 'שְׁמוֹנָה', 'תִּשְׁעָה', 'עֲשָׂרָה', 'אַחַד עָשָׂר', 'שְׁנֵים עָשָׂר', 'שְׁלוֹשָׁה עָשָׂר', 'אַרְבָּעָה עָשָׂר', 'חֲמִישָׁה עָשָׂר', 'שִׁשָּׁה עָשָׂר', 'שִׁבְעָה עָשָׂר', 'שְׁמוֹנָה עָשָׂר', 'תִּשְׁעָה עָשָׂר', 'עֶשְׂרִים'];
+  function prepSpeech(t) {
+    t = String(t).replace(/<[^>]*>/g, ' ');
+    t = t.replace(/\d+/g, m => (+m <= 20 ? NUMW[+m] : m));
+    // אות בודדת שמוקראת בשמה (ולא כחלק ממילה)
+    t = t.replace(/(^|[\s"'(])([א-ת])(?=$|[\s.,!?"')])/g, (m, a, L) => a + (NAME[L] ? (NIKUD[NAME[L]] || NAME[L]) : L));
+    t = t.replace(/(^|[\s"'(])(אלף|בית|גימל|דלת|הא|וו|זין|חית|טית|יוד|כף|למד|מם|נון|סמך|עין|פא|צדי|קוף|ריש|שין|תו)(?=$|[\s.,!?"')])/g, (m, a, w) => a + NIKUD[w]);
+    t = t.replace(/[^\u0590-\u05FF\sA-Za-z0-9.,!?'"״׳-]/g, ' ').replace(/\s+/g, ' ').trim();
+    return t;
+  }
   let remote = null;
   // אין קול עברית במכשיר – משמיעים דרך שירות הקראה חיצוני (אם יש אינטרנט)
   function speakRemote(t) {
@@ -284,12 +296,14 @@ if (typeof document !== 'undefined') {
   }
   function speak(t) {
     if (D.mute || !t) return;
+    t = prepSpeech(t);
+    if (!t) return;
     if (!voice) pickVoice();
     if (!voice || !('speechSynthesis' in window)) { speakRemote(t); return; }
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(t);
-      u.lang = voice.lang || 'he-IL'; u.voice = voice; u.rate = 0.85; u.pitch = 1.1;
+      u.lang = voice.lang || 'he-IL'; u.voice = voice; u.rate = 0.8; u.pitch = 1.1;
       setTimeout(() => speechSynthesis.speak(u), 40);
     } catch (e) { /* אין קול – ממשיכים בלי */ }
   }

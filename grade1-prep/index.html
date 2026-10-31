@@ -147,6 +147,6 @@
 <div id="app"></div>
 <div id="fx"></div>
 <script src="app.js"></script>
-<script>if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js");</script>
+<script>if ("serviceWorker" in navigator && location.protocol !== "file:") (function(){var had=!!navigator.serviceWorker.controller;navigator.serviceWorker.register("sw.js");navigator.serviceWorker.addEventListener("controllerchange",function(){if(had)location.reload();});})();</script>
 </body>
 </html>
