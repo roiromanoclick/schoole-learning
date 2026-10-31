@@ -1,4 +1,5 @@
 // ================= עזרים =================
+const dflt = (v, f) => (v == null ? f : v); // במקום האופרטור הכפול (תאימות לדפדפנים ישנים)
 const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 const pick = a => a[rnd(0, a.length - 1)];
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -323,7 +324,7 @@ function buildDemo(topic, q) {
 // ================= ממשק =================
 if (typeof document !== 'undefined') {
   const app = document.getElementById('app');
-  const store = { get: () => { try { return JSON.parse(localStorage.getItem('math6') || '{}'); } catch { return {}; } }, set: v => localStorage.setItem('math6', JSON.stringify(v)) };
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem('math6') || '{}'); } catch (e) { return {}; } }, set: v => localStorage.setItem('math6', JSON.stringify(v)) };
   let S = null;
   const PRAISE = ['כל הכבוד! 🎉', 'מצוין! ⭐', 'נכון מאוד! 👏', 'יפה מאוד! 💪', 'בול! 🎯'];
 
@@ -414,14 +415,14 @@ if (typeof document !== 'undefined') {
   function persist() {
     if (!S || !S.items) return;
     const data = { id: S.id, idx: S.idx, items: S.items.map(it => ({ tid: it.topic.id, q: it.q, attempts: it.attempts, done: it.done, ok: it.ok, sel: [...it.sel], vals: it.vals, scratch: it.scratch, strikes: it.strikes || [], wrong: [...it.wrong], praise: it.praise })) };
-    try { localStorage.setItem(sessKey(S.id), JSON.stringify(data)); } catch { /* מלא / חסום – מתעלמים */ }
+    try { localStorage.setItem(sessKey(S.id), JSON.stringify(data)); } catch (e) { /* מלא / חסום – מתעלמים */ }
   }
   function loadSaved(id) {
     try {
       const d = JSON.parse(localStorage.getItem(sessKey(id)));
       if (!d || !d.items || !d.items.length) return null;
       return { id: d.id, idx: d.idx, items: d.items.map(x => ({ topic: TOPICS.find(t => t.id === x.tid), q: x.q, attempts: x.attempts, done: x.done, ok: x.ok, sel: new Set(x.sel), vals: x.vals || [], scratch: x.scratch || [], strikes: x.strikes || [], wrong: new Set(x.wrong), praise: x.praise })) };
-    } catch { return null; }
+    } catch (e) { return null; }
   }
 
   function start(id, fresh = false) {
@@ -431,7 +432,7 @@ if (typeof document !== 'undefined') {
       if (S.items.every(x => x.done)) return finish();
       return goTo(S.idx);
     }
-    const queue = id === 'mock' ? shuffle(TOPICS.flatMap(t => [t, t, t])) : Array(10).fill(TOPICS.find(t => t.id === id));
+    const queue = id === 'mock' ? shuffle([].concat(...TOPICS.map(t => [t, t, t]))) : Array(10).fill(TOPICS.find(t => t.id === id));
     S = { id, idx: 0, items: queue.map(topic => ({ topic, q: null, attempts: 0, done: false, ok: false, sel: new Set(), vals: [], scratch: [], wrong: new Set() })) };
     goTo(0);
   }
@@ -489,8 +490,8 @@ if (typeof document !== 'undefined') {
 
     // שחזור מצב קודם
     const inputs = [...app.querySelectorAll('input:not(.scratch)')];
-    inputs.forEach((inp, i) => { inp.value = it.vals[i] ?? ''; });
-    app.querySelectorAll('input.scratch').forEach((inp, i) => { inp.value = it.scratch[i] ?? ''; });
+    inputs.forEach((inp, i) => { inp.value = dflt(it.vals[i], ''); });
+    app.querySelectorAll('input.scratch').forEach((inp, i) => { inp.value = dflt(it.scratch[i], ''); });
     it.wrong.forEach(i => { const b = app.querySelectorAll('.opt')[i]; if (b) { b.classList.add('bad'); b.disabled = true; } });
 
     if (!it.done && inputs[0]) inputs[0].focus();

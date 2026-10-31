@@ -1,4 +1,5 @@
 // ================= עזרים =================
+const dflt = (v, f) => (v == null ? f : v); // במקום האופרטור הכפול (תאימות לדפדפנים ישנים)
 const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 const pick = a => a[rnd(0, a.length - 1)];
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -113,7 +114,7 @@ function triSVG(pts, { sides, angles, rotate = 0 }) {
 // טבלת תרגיל מאונך: סימן הפעולה במרכז (משמאל לשני המספרים), שורת העברות למעלה ושורת תוצאה למטה
 function vtable(a, op, b, ans, carryCell, resCell, crossable = false) {
   const sa = String(a), sb = String(b), w = Math.max(sa.length, sb.length, String(ans).length);
-  const digit = (str, i) => str[i - (w - str.length)] ?? '';
+  const digit = (str, i) => dflt(str[i - (w - str.length)], '');
   const row = f => Array.from({ length: w }, (_, i) => f(i, w)).join('');
   return `<table class="vg ltr"><tr><td class="op"></td>${row((i) => `<td>${carryCell(i, w)}</td>`)}</tr>
     <tr><td class="op" rowspan="2">${op}</td>${row((i) => `<td${crossable && digit(sa, i) !== '' ? ` class="cross" data-c="${i}" title="לחצו כדי למחוק (פריטה)"` : ''}>${digit(sa, i)}</td>`)}</tr>
@@ -321,7 +322,7 @@ const TOPICS = [
 
 // ================= דוגמאות פתורות (שלב אחר שלב) =================
 function demoVMul(a0, b0) {
-  const b = b0 ?? rnd(3, 9), a = a0 ?? rnd(124, 999), ans = a * b, ds = String(a).split('').reverse().map(Number);
+  const b = dflt(b0, rnd(3, 9)), a = dflt(a0, rnd(124, 999)), ans = a * b, ds = String(a).split('').reverse().map(Number);
   const names = ['יחידות', 'עשרות', 'מאות'];
   let carry = 0, part = ''; const carries = {}, steps = [];
   steps.push(`<b>דוגמה:</b> ${ltr(`${a} × ${b}`)}<br>כופלים כל ספרה ב-${b}, מימין לשמאל, ומעבירים כשצריך.` + vpartial(a, '×', b, ans, '', carries));
@@ -343,7 +344,7 @@ function demoAddSub(op, a0, b0) {
   const names = ['יחידות', 'עשרות', 'מאות', 'אלפים', 'עשרות אלפים'];
   const steps = [], carries = {}; let part = '';
   if (op === '+') {
-    const a = a0 ?? rnd(20000, 59999), b = b0 ?? rnd(10000, 99999 - a), ans = a + b;
+    const a = dflt(a0, rnd(20000, 59999)), b = dflt(b0, rnd(10000, 99999 - a)), ans = a + b;
     const A = String(a).split('').reverse().map(Number), B = String(b).split('').reverse().map(Number);
     steps.push(`<b>דוגמה:</b> ${ltr(`${fmt(a)} + ${fmt(b)}`)}<br>מחברים עמודה אחר עמודה, מימין לשמאל.` + vpartial(a, '+', b, ans, '', carries));
     let carry = 0;
@@ -359,7 +360,7 @@ function demoAddSub(op, a0, b0) {
     steps.push(`<b>התוצאה: ${fmt(ans)}</b> ✅`);
     return steps;
   }
-  const a = a0 ?? rnd(30000, 90000), b = b0 ?? rnd(1000, a - 1), ans = a - b;
+  const a = dflt(a0, rnd(30000, 90000)), b = dflt(b0, rnd(1000, a - 1)), ans = a - b;
   const A = String(a).split('').reverse().map(Number), B = String(b).split('').reverse().map(Number);
   steps.push(`<b>דוגמה:</b> ${ltr(`${fmt(a)} − ${fmt(b)}`)}<br>מחסרים עמודה אחר עמודה, מימין לשמאל. אם אי אפשר לחסר – פורטים.` + vpartial(a, '−', b, ans, '', carries));
   for (let i = 0; i < A.length; i++) {
@@ -378,7 +379,7 @@ function demoAddSub(op, a0, b0) {
 }
 
 function demoDivRem(a0, b0) {
-  const b = b0 ?? rnd(3, 9), a = a0 ?? b * rnd(5, 15) + rnd(1, b - 1), q = Math.floor(a / b), r = a % b;
+  const b = dflt(b0, rnd(3, 9)), a = dflt(a0, b * rnd(5, 15) + rnd(1, b - 1)), q = Math.floor(a / b), r = a % b;
   return [
     `<b>דוגמה:</b> ${ltr(`${a} ÷ ${b}`)}<br>שואלים: כמה פעמים ${b} "נכנס" ב-${a}, בלי לעבור אותו?`,
     `בודקים בלוח הכפל של ${b}:<br>${ltr(`${b} × ${q} = ${b * q}`)} ✅ (קטן או שווה ל-${a})<br>${ltr(`${b} × ${q + 1} = ${b * (q + 1)}`)} ❌ (גדול מ-${a})<br>לכן המנה היא <b>${q}</b>.`,
@@ -408,7 +409,7 @@ function buildDemo(topic, q) {
 // ================= ממשק =================
 if (typeof document !== 'undefined') {
   const app = document.getElementById('app');
-  const store = { get: () => { try { return JSON.parse(localStorage.getItem('math4') || '{}'); } catch { return {}; } }, set: v => localStorage.setItem('math4', JSON.stringify(v)) };
+  const store = { get: () => { try { return JSON.parse(localStorage.getItem('math4') || '{}'); } catch (e) { return {}; } }, set: v => localStorage.setItem('math4', JSON.stringify(v)) };
   let S = null;
   const PRAISE = ['כל הכבוד! 🎉', 'מצוין! ⭐', 'נכון מאוד! 👏', 'יפה מאוד! 💪', 'בול! 🎯'];
 
@@ -492,14 +493,14 @@ if (typeof document !== 'undefined') {
   function persist() {
     if (!S || !S.items) return;
     const data = { id: S.id, idx: S.idx, items: S.items.map(it => ({ tid: it.topic.id, q: it.q, attempts: it.attempts, done: it.done, ok: it.ok, sel: [...it.sel], vals: it.vals, scratch: it.scratch, strikes: it.strikes || [], wrong: [...it.wrong], praise: it.praise })) };
-    try { localStorage.setItem(sessKey(S.id), JSON.stringify(data)); } catch { /* מלא / חסום – מתעלמים */ }
+    try { localStorage.setItem(sessKey(S.id), JSON.stringify(data)); } catch (e) { /* מלא / חסום – מתעלמים */ }
   }
   function loadSaved(id) {
     try {
       const d = JSON.parse(localStorage.getItem(sessKey(id)));
       if (!d || !d.items || !d.items.length) return null;
       return { id: d.id, idx: d.idx, items: d.items.map(x => ({ topic: TOPICS.find(t => t.id === x.tid), q: x.q, attempts: x.attempts, done: x.done, ok: x.ok, sel: new Set(x.sel), vals: x.vals || [], scratch: x.scratch || [], strikes: x.strikes || [], wrong: new Set(x.wrong), praise: x.praise })) };
-    } catch { return null; }
+    } catch (e) { return null; }
   }
 
   function start(id, fresh = false) {
@@ -509,7 +510,7 @@ if (typeof document !== 'undefined') {
       if (S.items.every(x => x.done)) return finish();
       return goTo(S.idx);
     }
-    const queue = id === 'mock' ? shuffle(TOPICS.flatMap(t => [t, t])) : Array(10).fill(TOPICS.find(t => t.id === id));
+    const queue = id === 'mock' ? shuffle([].concat(...TOPICS.map(t => [t, t]))) : Array(10).fill(TOPICS.find(t => t.id === id));
     S = { id, idx: 0, items: queue.map(topic => ({ topic, q: null, attempts: 0, done: false, ok: false, sel: new Set(), vals: [], scratch: [], wrong: new Set() })) };
     goTo(0);
   }
@@ -568,8 +569,8 @@ if (typeof document !== 'undefined') {
 
     // שחזור מצב קודם
     const inputs = [...app.querySelectorAll('input:not(.scratch)')];
-    inputs.forEach((inp, i) => { inp.value = it.vals[i] ?? ''; });
-    app.querySelectorAll('input.scratch').forEach((inp, i) => { inp.value = it.scratch[i] ?? ''; });
+    inputs.forEach((inp, i) => { inp.value = dflt(it.vals[i], ''); });
+    app.querySelectorAll('input.scratch').forEach((inp, i) => { inp.value = dflt(it.scratch[i], ''); });
     (it.strikes || []).forEach(c => { const td = app.querySelector(`td.cross[data-c="${c}"]`); if (td) td.classList.add('x'); });
     app.querySelectorAll('td.cross').forEach(td => td.onclick = () => { if (it.done) return; td.classList.toggle('x'); saveInputs(); });
     it.wrong.forEach(i => { const b = app.querySelectorAll('.opt')[i]; if (b) { b.classList.add('bad'); b.disabled = true; } });
