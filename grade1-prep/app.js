@@ -4,7 +4,7 @@ const pick = a => a[rnd(0, a.length - 1)];
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const take = (a, n) => shuffle(a).slice(0, n);
 
-const colsFor = n => (n <= 5 ? n : Math.ceil(n / 2));
+const colsFor = n => (n <= 5 ? n : Math.min(7, Math.ceil(n / 2)));
 const grp = (e, n, o) => {
   o = o || {};
   let h = '';
@@ -103,10 +103,10 @@ function genSounds() {
 // ================= עולם 3 – מספרים =================
 function genNumbers() {
   const qs = [];
-  take([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 4).forEach(n => qs.push(mkQ(`איפה המספר ${n}?`, '', numOpts(n, 1, 10))));
-  take([2, 3, 4, 5, 6, 7, 8, 9], 3).forEach(n => {
+  take([3, 7, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 4).forEach(n => qs.push(mkQ(`איפה המספר ${n}?`, '', numOpts(n, 1, 20))));
+  take([4, 6, 8, 11, 12, 13, 14, 15], 3).forEach(n => {
     const [e] = pick(THINGS);
-    qs.push(mkQ(`בחרו את הקבוצה שיש בה ${n}`, `<div class="bigl">${n}</div>`, numOpts(n, 1, 10).map(o => oGrp(e, o.h.replace(/\D/g, '') * 1, o.ok)), 'stack'));
+    qs.push(mkQ(`בחרו את הקבוצה שיש בה ${n}`, `<div class="bigl">${n}</div>`, numOpts(n, 1, 20).map(o => oGrp(e, o.h.replace(/\D/g, '') * 1, o.ok)), 'stack'));
   });
   take([1, 2, 3, 4, 5, 6], 3).forEach(n => qs.push(mkQ('כמה נקודות יש על הקובייה?', `<div class="dice">${diceSVG(n)}</div>`, numOpts(n, 1, 6))));
   return qs;
@@ -114,10 +114,10 @@ function genNumbers() {
 
 // ================= עולם 4 – סופרים =================
 function genCount() {
-  const qs = [], ns = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), things = shuffle(THINGS);
+  const qs = [], ns = take([2, 4, 5, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 8), things = shuffle(THINGS);
   for (let i = 0; i < 8; i++) {
     const n = ns[i], [e, pl] = things[i];
-    qs.push(mkQ(`כמה ${pl} יש? לחצו על כל אחד כדי לספור`, grp(e, n, { tap: true }), numOpts(n, 1, 10)));
+    qs.push(mkQ(`כמה ${pl} יש? לחצו על כל אחד כדי לספור`, grp(e, n, { tap: true }), numOpts(n, 1, 20)));
   }
   for (let i = 8; i < 10; i++) {
     const n = rnd(3, 8), [e, pl] = things[i];
@@ -130,16 +130,16 @@ function genCount() {
 function genAddSub() {
   const qs = [], things = shuffle(THINGS), eq = (...p) => `<div class="eq">${p.join('')}</div>`;
   for (let i = 0; i < 5; i++) {
-    const a = rnd(1, 5), b = rnd(1, Math.min(5, 10 - a)), [e] = things[i];
-    qs.push(mkQ(`${a} ועוד ${b}. כמה יחד?`, eq(grp(e, a), '<span class="op">➕</span>', grp(e, b), '<span class="op">＝</span><span class="op qm">❓</span>'), numOpts(a + b, 0, 10)));
+    const a = i < 2 ? rnd(1, 5) : rnd(4, 10), b = i < 2 ? rnd(1, Math.min(5, 10 - a)) : rnd(3, 10), [e] = things[i];
+    qs.push(mkQ(`${a} ועוד ${b}. כמה יחד?`, eq(grp(e, a), '<span class="op">➕</span>', grp(e, b), '<span class="op">＝</span><span class="op qm">❓</span>'), numOpts(a + b, 0, 20)));
   }
   for (let i = 5; i < 8; i++) {
-    const a = rnd(3, 8), b = rnd(1, a - 1), [e] = things[i];
-    qs.push(mkQ(`היו ${a}, ${b} הלכו. כמה נשארו?`, grp(e, a, { x: b }), numOpts(a - b, 0, 10)));
+    const a = i === 5 ? rnd(3, 9) : rnd(10, 20), b = rnd(1, Math.min(a - 1, 9)), [e] = things[i];
+    qs.push(mkQ(`היו ${a}, ${b} הלכו. כמה נשארו?`, grp(e, a, { x: b }), numOpts(a - b, 0, 20)));
   }
   for (let i = 8; i < 10; i++) {
-    const t = rnd(5, 8), a = rnd(1, t - 1), [e] = things[i];
-    qs.push(mkQ(`יש ${a}, ורוצים ${t}. כמה חסר?`, eq(grp(e, a), '<span class="op">➕</span><span class="op qm">❓</span><span class="op">＝</span>', grp(e, t)), numOpts(t - a, 0, 10)));
+    const t = i === 8 ? rnd(5, 10) : rnd(11, 20), a = t - rnd(1, Math.min(t - 1, 9)), [e] = things[i];
+    qs.push(mkQ(`יש ${a}, ורוצים ${t}. כמה חסר?`, eq(grp(e, a), '<span class="op">➕</span><span class="op qm">❓</span><span class="op">＝</span>', grp(e, t)), numOpts(t - a, 0, 20)));
   }
   return qs;
 }
@@ -212,10 +212,10 @@ function genPatterns() {
   };
   shuffle(['AB', 'AAB', 'ABB', 'ABC']).forEach((s, i) => qs.push(pat(s, POOLS[i])));
   const seqHTML = a => `<div class="seq">${a.map(x => (x === '?' ? '<span class="qm">❓</span>' : `<span>${x}</span>`)).join('')}</div>`;
-  for (let i = 0; i < 2; i++) { const s = rnd(1, 6); qs.push(mkQ('איזה מספר חסר?', seqHTML([s, s + 1, '?', s + 3]), numOpts(s + 2, 1, 10))); }
-  { const s = rnd(1, 7); qs.push(mkQ('איזה מספר בא אחר כך?', seqHTML([s, s + 1, s + 2, '?']), numOpts(s + 3, 1, 10))); }
-  take([1, 2, 3, 4, 5, 6, 7, 8, 9], 2).forEach(n => qs.push(mkQ(`איזה מספר בא אחרי ${n}?`, seqHTML([n, '?']), numOpts(n + 1, 1, 10))));
-  { const n = rnd(2, 10); qs.push(mkQ(`איזה מספר בא לפני ${n}?`, seqHTML(['?', n]), numOpts(n - 1, 1, 10))); }
+  for (let i = 0; i < 2; i++) { const s = rnd(1, 16); qs.push(mkQ('איזה מספר חסר?', seqHTML([s, s + 1, '?', s + 3]), numOpts(s + 2, 1, 20))); }
+  { const s = rnd(1, 17); qs.push(mkQ('איזה מספר בא אחר כך?', seqHTML([s, s + 1, s + 2, '?']), numOpts(s + 3, 1, 20))); }
+  take([5, 8, 9, 10, 11, 14, 17, 19], 2).forEach(n => qs.push(mkQ(`איזה מספר בא אחרי ${n}?`, seqHTML([n, '?']), numOpts(n + 1, 1, 20))));
+  { const n = rnd(8, 20); qs.push(mkQ(`איזה מספר בא לפני ${n}?`, seqHTML(['?', n]), numOpts(n - 1, 1, 20))); }
   return qs;
 }
 
