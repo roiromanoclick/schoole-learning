@@ -11,6 +11,11 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>חזרה למבחן במתמטיקה – כיתה ד׳ (בדיקה)</title>
 <style>
+  /* Safari / iOS: כפתורים וקלטים יורשים צבע וגופן, בלי עיצוב מערכת */
+  button, input { font-family:inherit; }
+  button { color:inherit; -webkit-tap-highlight-color:transparent; }
+  input[type=text] { -webkit-appearance:none; appearance:none; border-radius:10px; }
+  input:disabled { -webkit-text-fill-color:currentColor; opacity:1; color:inherit; }
   :root { --bg:#fff7e6; --card:#fff; --main:#3b82f6; --ok:#16a34a; --bad:#dc2626; --ink:#1f2937; }
   * { box-sizing: border-box; }
   body { margin:0; font-family: "Arial", "Heebo", sans-serif; background:var(--bg); color:var(--ink); font-size:24px; }
@@ -73,7 +78,7 @@
   .demo-top { font-size:18px; color:#b45309; margin-bottom:8px; font-weight:bold; }
   .demo-body { font-size:26px; line-height:1.7; text-align:center; margin-bottom:8px; }
   .demo .vert { font-size:34px; margin:6px 0; }
-  .overlay { position:fixed; inset:0; background:#0008; display:flex; align-items:center; justify-content:center; z-index:10; }
+  .overlay { position:fixed; top:0; right:0; bottom:0; left:0; background:#0008; display:flex; align-items:center; justify-content:center; z-index:10; }
   .dlg { background:#fff; border-radius:16px; padding:22px; width:min(380px,90vw); text-align:center; }
   .dlg input { display:block; width:100%; margin:10px 0; text-align:center; font-size:22px; padding:8px; border:3px solid #cbd5e1; border-radius:10px; direction:ltr; }
   .dlg .err { color:var(--bad); min-height:24px; }
@@ -125,8 +130,8 @@
     .vg td { width:min(62px,11vw); height:min(60px,11vw); font-size:min(42px,7.5vw); }
     .vg td.op { width:min(52px,8vw); font-size:min(46px,8vw); }
     .vg .cr { font-size:min(24px,4.5vw); }
-    .vg input[type=text] { width:min(56px,10vw); font-size:min(36px,7vw); }
-    .vg input.scratch { width:min(58px,10vw); font-size:min(22px,4.5vw); }
+    .vg input[type=text] { width:min(56px,10vw); font-size:max(16px,min(36px,7vw)); }
+    .vg input.scratch { width:min(58px,10vw); font-size:max(16px,min(22px,4.5vw)); }
     input[type=text] { font-size:26px; width:130px; padding:6px; }
     .answers { gap:8px; }
     .answers label { font-size:16px; }
