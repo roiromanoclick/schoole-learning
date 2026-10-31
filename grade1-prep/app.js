@@ -263,19 +263,31 @@ if (typeof document !== 'undefined') {
 
   // ----- קול -----
   let voice = null;
+  const isHe = v => /^(he|iw)([-_]|$)/i.test(v.lang || '') || /hebrew|עברית|carmit|asaf/i.test(v.name || '');
   const pickVoice = () => {
     if (!('speechSynthesis' in window)) return;
-    const vs = speechSynthesis.getVoices();
-    voice = vs.find(v => /^he/i.test(v.lang) || /^iw/i.test(v.lang)) || null;
+    const vs = speechSynthesis.getVoices() || [];
+    voice = vs.filter(isHe)[0] || null;
   };
   if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  let remote = null;
+  // אין קול עברית במכשיר – משמיעים דרך שירות הקראה חיצוני (אם יש אינטרנט)
+  function speakRemote(t) {
+    try {
+      if (remote) remote.pause();
+      remote = new Audio('https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=iw&q=' + encodeURIComponent(t));
+      const p = remote.play();
+      if (p && p.catch) p.catch(function () {});
+    } catch (e) { /* ממשיכים בלי קול */ }
+  }
   function speak(t) {
-    if (D.mute || !('speechSynthesis' in window) || !t) return;
+    if (D.mute || !t) return;
+    if (!voice) pickVoice();
+    if (!voice || !('speechSynthesis' in window)) { speakRemote(t); return; }
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(t);
-      u.lang = 'he-IL'; u.rate = 0.85; u.pitch = 1.1;
-      if (voice) u.voice = voice;
+      u.lang = voice.lang || 'he-IL'; u.voice = voice; u.rate = 0.85; u.pitch = 1.1;
       setTimeout(() => speechSynthesis.speak(u), 40);
     } catch (e) { /* אין קול – ממשיכים בלי */ }
   }
