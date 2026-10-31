@@ -235,6 +235,89 @@ function genWorld() {
   return qs;
 }
 
+// ================= עולם 11 – קווים (מתיחת קו וחיבור נקודות) =================
+const NS = 'http://www.w3.org/2000/svg';
+function mkAct(say, vis, act) { return { say, vis, opts: [{ h: '⭐', ok: true }], cls: 'hide', act }; }
+const TRACES = {
+  line: 'M30 100 L270 100', vert: 'M150 20 L150 180', diag: 'M30 170 L270 30',
+  zig: 'M25 150 L85 50 L145 150 L205 50 L265 150', stairs: 'M30 165 L90 165 L90 125 L150 125 L150 85 L210 85 L210 45 L270 45',
+  wave: 'M20 100 C60 20 100 20 150 100 S240 180 280 100',
+  circle: 'M75 100 A75 75 0 1 1 225 100 A75 75 0 1 1 75 100', square: 'M70 40 L230 40 L230 160 L70 160 L70 40',
+  tri: 'M150 25 L255 165 L45 165 L150 25', house: 'M60 170 L60 95 L150 30 L240 95 L240 170 L60 170'
+};
+function traceAct(d) {
+  return (vis, done) => {
+    vis.innerHTML = '<svg class="trace" viewBox="0 0 300 200" aria-label="עקבו אחרי הקו"><path class="tg" d="' + d + '"/><path class="tu" d=""/><circle class="ts" r="11"/></svg>';
+    const svg = vis.firstChild, guide = svg.querySelector('.tg'), user = svg.querySelector('.tu'), st = svg.querySelector('.ts');
+    const N = 44, len = guide.getTotalLength(), pts = [], hit = [];
+    for (let i = 0; i < N; i++) { const p = guide.getPointAtLength(len * i / (N - 1)); pts.push(p); hit.push(false); }
+    st.setAttribute('cx', pts[0].x); st.setAttribute('cy', pts[0].y);
+    let down = false, dd = '', fin = false;
+    const xy = e => { const r = svg.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 300, (e.clientY - r.top) / r.height * 200]; };
+    const add = e => {
+      if (fin) return;
+      const q = xy(e); dd += (dd ? ' L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); user.setAttribute('d', dd);
+      let n = 0;
+      for (let i = 0; i < N; i++) { if (!hit[i] && Math.hypot(pts[i].x - q[0], pts[i].y - q[1]) < 24) hit[i] = true; if (hit[i]) n++; }
+      if (n >= N * 0.85) { fin = true; guide.setAttribute('class', 'tg ok'); st.style.display = 'none'; done(); }
+    };
+    svg.addEventListener('pointerdown', e => { if (e.preventDefault) e.preventDefault(); down = true; dd = ''; try { svg.setPointerCapture(e.pointerId); } catch (x) { } add(e); });
+    svg.addEventListener('pointermove', e => { if (down) add(e); });
+    const up = () => { down = false; };
+    svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
+    vis.__trace = { pts: pts, svg: svg };
+  };
+}
+const DOTSETS = {
+  house: { closed: true, pts: [[60, 170], [60, 100], [150, 30], [240, 100], [240, 170]] },
+  zig: { closed: false, pts: [[25, 150], [65, 60], [105, 150], [145, 60], [185, 150], [225, 60], [265, 150]] },
+  circle8: { closed: true, pts: Array.from({ length: 8 }, (_, i) => [150 + 80 * Math.sin(i * Math.PI / 4), 100 - 80 * Math.cos(i * Math.PI / 4)]) },
+  star: { closed: true, pts: Array.from({ length: 10 }, (_, i) => { const r = i % 2 ? 38 : 88, a = i * Math.PI / 5; return [150 + r * Math.sin(a), 105 - r * Math.cos(a)]; }) }
+};
+function dotsAct(set) {
+  return (vis, done) => {
+    const P = set.pts, n = P.length;
+    let h = '<svg class="trace" viewBox="0 0 300 200" aria-label="חברו את הנקודות"><g class="lines"></g>';
+    P.forEach((p, i) => { h += '<g class="dot' + (i === 0 ? ' nx' : '') + '" data-n="' + (i + 1) + '" style="cursor:pointer"><circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="19"/><text x="' + p[0].toFixed(1) + '" y="' + (p[1] + 8).toFixed(1) + '" text-anchor="middle">' + (i + 1) + '</text></g>'; });
+    vis.innerHTML = h + '</svg>';
+    const svg = vis.firstChild, lines = svg.querySelector('.lines'), dots = svg.querySelectorAll('.dot');
+    let next = 1, fin = false;
+    const line = (a, b) => { const l = document.createElementNS(NS, 'line'); l.setAttribute('x1', a[0]); l.setAttribute('y1', a[1]); l.setAttribute('x2', b[0]); l.setAttribute('y2', b[1]); lines.appendChild(l); };
+    dots.forEach((g, i) => {
+      g.addEventListener('click', () => {
+        if (fin) return;
+        if (i + 1 !== next) { g.setAttribute('class', 'dot shk'); setTimeout(() => { g.setAttribute('class', 'dot' + (i + 1 < next ? ' dn' : '')); }, 400); return; }
+        g.setAttribute('class', 'dot dn'); tone([500 + i * 50], 0.08, 'triangle', 0.12);
+        if (i > 0) line(P[i - 1], P[i]);
+        next++;
+        if (next > n) { if (set.closed) line(P[n - 1], P[0]); fin = true; done(); }
+        else dots[next - 1].setAttribute('class', 'dot nx');
+      });
+    });
+    vis.__dots = { svg: svg, dots: dots };
+  };
+}
+function genLines() {
+  const tr = [].concat(take(['line', 'vert', 'diag'], 2), take(['zig', 'stairs', 'wave'], 2), take(['circle', 'square', 'tri', 'house'], 2));
+  const dt = shuffle(['house', 'zig']).concat(['circle8', 'star']);
+  const T = k => mkAct('עקבו אחרי הקו עם האצבע', '', traceAct(TRACES[tr[k]]));
+  const Dn = k => mkAct('חברו את הנקודות לפי המספרים', '', dotsAct(DOTSETS[dt[k]]));
+  return [T(0), T(1), Dn(0), T(2), Dn(1), T(3), T(4), Dn(2), T(5), Dn(3)];
+}
+
+// ================= עולם 12 – משלימים מספרים =================
+function genFill() {
+  const seqH = a => `<div class="seq sm">${a.map(x => (x === '?' ? '<span class="qm">❓</span>' : `<span>${x}</span>`)).join('')}</div>`;
+  const eqH = (a, op, b, c) => `<div class="seq sm">${[a, '<span class="ar">' + op + '</span>', b, '<span class="ar">＝</span>', c].map(x => (x === '?' ? '<span class="qm">❓</span>' : x === a || x === b || x === c ? `<span>${x}</span>` : x)).join('')}</div>`;
+  const qs = [];
+  for (let i = 0; i < 2; i++) { const s = rnd(1, 15); qs.push(mkQ('איזה מספר חסר?', seqH([s, s + 1, '?', s + 3, s + 4]), numOpts(s + 2, 1, 20))); }
+  { const s = rnd(6, 20); qs.push(mkQ('סופרים אחורה. איזה מספר חסר?', seqH([s, s - 1, '?', s - 3]), numOpts(s - 2, 1, 20))); }
+  take([[2, 4, 6, 8], [4, 6, 8, 10], [6, 8, 10, 12], [10, 12, 14, 16], [12, 14, 16, 18]], 2).forEach(a => qs.push(mkQ('סופרים בקפיצות של שתיים. איזה מספר חסר?', seqH([a[0], a[1], '?', a[3]]), numOpts(a[2], 1, 20))));
+  take([1, 2, 3, 4, 5, 6, 7, 8, 9], 3).forEach(a => qs.push(mkQ(`${a} ועוד כמה יהיה עשר?`, eqH(a, '➕', '?', 10), numOpts(10 - a, 0, 10))));
+  take([5, 8, 12, 15, 16], 2).forEach(a => qs.push(mkQ(`${a} ועוד כמה יהיה עשרים?`, eqH(a, '➕', '?', 20), numOpts(20 - a, 0, 20))));
+  return qs;
+}
+
 const WORLDS = [
   { id: 'letters', name: 'אותיות', icon: '🔤', color: '#ef476f', gen: genLetters },
   { id: 'sounds', name: 'צלילים', icon: '🔊', color: '#fb5607', gen: genSounds },
@@ -246,6 +329,8 @@ const WORLDS = [
   { id: 'compare', name: 'משווים', icon: '⚖️', color: '#f4a261', gen: genCompare },
   { id: 'patterns', name: 'ממשיכים', icon: '🧩', color: '#2a9d8f', gen: genPatterns },
   { id: 'world', name: 'סביבנו', icon: '🐶', color: '#d6336c', gen: genWorld },
+  { id: 'lines', name: 'קווים ונקודות', icon: '✏️', color: '#7b2cbf', gen: genLines },
+  { id: 'fill', name: 'משלימים מספרים', icon: '🔟', color: '#00798c', gen: genFill },
 ];
 
 // ================= ממשק =================
@@ -275,12 +360,14 @@ if (typeof document !== 'undefined') {
   // ----- הכנת טקסט להקראה: ניקוד לשמות האותיות, מספרים במילים, בלי אימוג׳י -----
   const NIKUD = { 'אלף': 'אָלֶף', 'בית': 'בֵּית', 'גימל': 'גִּימֶל', 'דלת': 'דָּלֶת', 'הא': 'הֵא', 'וו': 'וָו', 'זין': 'זַיִן', 'חית': 'חֵית', 'טית': 'טֵית', 'יוד': 'יוֹד', 'כף': 'כַּף', 'למד': 'לָמֶד', 'מם': 'מֵם', 'נון': 'נוּן', 'סמך': 'סָמֶךְ', 'עין': 'עַיִן', 'פא': 'פֵּא', 'צדי': 'צָדִי', 'קוף': 'קוֹף', 'ריש': 'רֵישׁ', 'שין': 'שִׁין', 'תו': 'תָּו' };
   const NUMW = ['אֶפֶס', 'אֶחָד', 'שְׁנַיִם', 'שְׁלוֹשָׁה', 'אַרְבָּעָה', 'חֲמִישָׁה', 'שִׁשָּׁה', 'שִׁבְעָה', 'שְׁמוֹנָה', 'תִּשְׁעָה', 'עֲשָׂרָה', 'אַחַד עָשָׂר', 'שְׁנֵים עָשָׂר', 'שְׁלוֹשָׁה עָשָׂר', 'אַרְבָּעָה עָשָׂר', 'חֲמִישָׁה עָשָׂר', 'שִׁשָּׁה עָשָׂר', 'שִׁבְעָה עָשָׂר', 'שְׁמוֹנָה עָשָׂר', 'תִּשְׁעָה עָשָׂר', 'עֶשְׂרִים'];
+  const NIK_W = {"אדום": "אָדֹם", "אוטובוס": "אוֹטוֹבּוּס", "אוינק": "אוֹיְנְק", "אוכלים": "אוֹכְלִים", "אומר": "אוֹמֵר", "אופניים": "אוֹפַנַּיִים", "אות": "אוֹת", "אחורה": "אָחוֹרָה", "אחר": "אַחַר", "אחרי": "אַחֲרֵי", "איזה": "אֵיזֶה", "איזו": "אֵיזוֹ", "איפה": "אֵיפֹה", "אפרוחים": "אֶפְרוֹחִים", "אריה": "אַרְיֵה", "את": "אֶת", "באות": "בְּאוֹת", "באיזו": "בְּאֵיזוֹ", "בה": "בָּהּ", "בחרו": "בִּחֲרוּ", "בלון": "בָּלוֹן", "בלונים": "בָּלוֹנִים", "במה": "בַּמֶּה", "בניין": "בִּנְיָן", "בננה": "בָּנָנָה", "בקפיצות": "בְּקְפִיצוֹת", "ברווז": "בַּרְוָז", "בא": "בָּא", "גבוה": "גָּבוֹהַּ", "גדול": "גָּדוֹל", "גמל": "גָּמָל", "גשם": "גֶּשֶׁם", "ג׳ירפה": "גִ׳ירָפָה", "דבר": "דָּבָר", "דג": "דָּג", "דגים": "דָּגִים", "האות": "הָאוֹת", "האצבע": "הָאֶצְבַּע", "הב": "הַב", "היו": "הָיוּ", "היי": "הִי", "הכוכב": "הַכּוֹכָב", "הלב": "הַלֵּב", "הלכו": "הָלְכוּ", "המילה": "הַמִּלָּה", "המלבן": "הַמַּלְבֵּן", "המספר": "הַמִּסְפָּר", "המספרים": "הַמִּסְפָּרִים", "המשולש": "הַמְשֻׁלָּשׁ", "הנקודות": "הַנְּקֻדּוֹת", "העיגול": "הָעִגּוּל", "הצבע": "הַצֶּבַע", "הקבוצה": "הַקְּבוּצָה", "הקו": "הַקַּו", "הקובייה": "הַקֻּבִּיָּה", "הר": "הַר", "הראש": "הָרֹאשׁ", "הרגליים": "הָרַגְלַיִם", "הריבוע": "הָרִבּוּעַ", "ואאר": "גְּרְר", "ועוד": "וְעוֹד", "ורוד": "וָרֹד", "ורוצים": "וְרוֹצִים", "זברה": "זֶבְּרָה", "זהה": "זֵהָה", "חברו": "חַבְּרוּ", "חום": "חוּם", "חזיר": "חֲזִיר", "חסר": "חָסֵר", "חתול": "חָתוּל", "טלפון": "טֶלֶפוֹן", "יהיה": "יִהְיֶה", "יותר": "יוֹתֵר", "יחד": "יַחַד", "ינשוף": "יַנְשׁוּף", "ירוק": "יָרֹק", "יש": "יֵשׁ", "כבד": "כָּבֵד", "כבשה": "כִּבְשָׂה", "כדור": "כַּדּוּר", "כדי": "כְּדֵי", "כוכבים": "כּוֹכָבִים", "כותבים": "כּוֹתְבִים", "כחול": "כָּחֹל", "כך": "כָּךְ", "כל": "כָּל", "כלב": "כֶּלֶב", "כמה": "כַּמָּה", "כשיורד": "כְּשֶׁיּוֹרֵד", "כשקר": "כְּשֶׁקַּר", "כתום": "כָּתֹם", "לא": "לֹא", "לב": "לֵב", "לבן": "לָבָן", "לבנה": "לְבֵנָה", "לבננה": "לַבָּנָנָה", "לגזר": "לַגֶּזֶר", "לדוב": "לַדֹּב", "לובשים": "לוֹבְשִׁים", "לוויתן": "לִוְיָתָן", "לחצו": "לִחֲצוּ", "ללימון": "לַלִּימוֹן", "למלפפון": "לַמְלָפְפוֹן", "לספור": "לִסְפֹּר", "לעגבנייה": "לָעַגְבָנִיָּה", "לענבים": "לָעֲנָבִים", "לפי": "לְפִי", "לפני": "לִפְנֵי", "לצפרדע": "לַצְּפַרְדֵּעַ", "לתות": "לַתּוּת", "לתפוז": "לַתַּפּוּז", "מה": "מָה", "מטריה": "מִטְרִיָּה", "מי": "מִי", "מיאו": "מִיאוּ", "מכוניות": "מְכוֹנִיּוֹת", "מספר": "מִסְפָּר", "מצאו": "מִצְאוּ", "מרובע": "מְרֻבָּע", "מרק": "מָרָק", "משאית": "מַשָּׂאִית", "מתחילה": "מַתְחִילָה", "נבט": "נֶבֶט", "נמלה": "נְמָלָה", "נעל": "נַעַל", "נשארו": "נִשְׁאֲרוּ", "סגול": "סָגֹל", "סוס": "סוּס", "סופרים": "סוֹפְרִים", "עגול": "עָגֹל", "עוגה": "עוּגָה", "עוגיות": "עוּגִיּוֹת", "עכבר": "עַכְבָּר", "על": "עַל", "עלה": "עָלֶה", "עם": "עִם", "עץ": "עֵץ", "עקבו": "עִקְבוּ", "עשר": "עֶשֶׂר", "עשרים": "עֶשְׂרִים", "פותחים": "פּוֹתְחִים", "פחות": "פָּחוֹת", "פיל": "פִּיל", "פרה": "פָּרָה", "פרח": "פֶּרַח", "פרחים": "פְּרָחִים", "פרפרים": "פַּרְפָּרִים", "צב": "צָב", "צבע": "צֶבַע", "צהוב": "צָהֹב", "צורה": "צוּרָה", "צפרדע": "צְפַרְדֵּעַ", "קוואק": "קְוַאק", "קוף": "קוֹף", "קוקוריקו": "קוֹקוֹרִיקוֹ", "קוראים": "קוֹרְאִים", "קטן": "קָטָן", "רכבת": "רַכֶּבֶת", "שותים": "שׁוֹתִים", "שחור": "שָׁחֹר", "שייך": "שַׁיָּיךְ", "שיש": "שֶׁיֵּשׁ", "של": "שֶׁל", "שמים": "שָׂמִים", "שמש": "שֶׁמֶשׁ", "שתיים": "שְׁתַּיִם", "תותים": "תּוּתִים", "תמונה": "תְּמוּנָה", "תפוח": "תַּפּוּחַ", "תפוחים": "תַּפּוּחִים", "תרנגול": "תַּרְנְגוֹל", "מוּ": "מוּ", "סמך": "סָמֶךְ", "בואו": "בּוֹאוּ", "נשחק": "נְשַׂחֵק", "כל הכבוד": "כָּל הַכָּבוֹד", "הכבוד": "הַכָּבוֹד", "כמעט": "כִּמְעַט", "נסו": "נַסּוּ", "שוב": "שׁוּב", "נורא": "נוֹרָא", "עוד": "עוֹד", "פעם": "פַּעַם", "אפשר": "אֶפְשָׁר", "יופי": "יוֹפִי", "מעולה": "מְעוּלֶּה", "נהדר": "נֶהְדָּר", "וואו": "וָאוּ", "נכון": "נָכוֹן", "מדהימה": "מַדְהִימָה", "מעט": "מְעַט", "מוכנה": "מוּכָנָה", "לכיתה": "לְכִתָּה", "כיף": "כֵּיף", "לך": "לָךְ", "סיימתם": "סִיַּמְתֶּם", "העולמות": "הָעוֹלָמוֹת", "העולם": "הָעוֹלָם"};
   function prepSpeech(t) {
     t = String(t).replace(/<[^>]*>/g, ' ');
     t = t.replace(/\d+/g, m => (+m <= 20 ? NUMW[+m] : m));
     // אות בודדת שמוקראת בשמה (ולא כחלק ממילה)
     t = t.replace(/(^|[\s"'(])([א-ת])(?=$|[\s.,!?"')])/g, (m, a, L) => a + (NAME[L] ? (NIKUD[NAME[L]] || NAME[L]) : L));
     t = t.replace(/(^|[\s"'(])(אלף|בית|גימל|דלת|הא|וו|זין|חית|טית|יוד|כף|למד|מם|נון|סמך|עין|פא|צדי|קוף|ריש|שין|תו)(?=$|[\s.,!?"')])/g, (m, a, w) => a + NIKUD[w]);
+    t = t.replace(/[א-ת׳]+/g, w => (NIK_W.hasOwnProperty(w) ? NIK_W[w] : w));
     t = t.replace(/[^\u0590-\u05FF\sA-Za-z0-9.,!?'"״׳-]/g, ' ').replace(/\s+/g, ' ').trim();
     return t;
   }
@@ -424,6 +511,7 @@ if (typeof document !== 'undefined') {
     document.getElementById('mutes').onclick = () => { D.mute = !D.mute; save(D); if (D.mute && 'speechSynthesis' in window) speechSynthesis.cancel(); document.getElementById('mutes').textContent = D.mute ? '🔇' : '🔊'; };
     document.getElementById('next').onclick = () => { if (S.i === S.qs.length - 1) finish(); else { S.i++; question(); } };
     app.querySelectorAll('.opt').forEach(b => b.onclick = () => answer(Number(b.dataset.j)));
+    if (q.act) q.act(document.getElementById('vis'), () => answer(0));
     app.querySelectorAll('.grp.tap .it').forEach(el => el.onclick = () => {
       if (el.classList.contains('counted')) return;
       el.classList.add('counted'); el.dataset.n = ++S.cnt;
