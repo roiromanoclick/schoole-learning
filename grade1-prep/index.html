@@ -127,6 +127,20 @@
   @keyframes fall { to { transform:translateY(115vh) rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001s !important; animation-iteration-count:1 !important; } }
   @media (max-width:420px) { .wrap { padding:8px; } .opts { gap:10px; } .say { gap:10px; } .bubble::before { right:-20px; border-width:10px; } }
+  #bg { position:fixed; top:0; right:0; bottom:0; left:0; overflow:hidden; pointer-events:none; z-index:0; }
+  #bg span { position:absolute; bottom:-50px; opacity:.55; animation:floatup linear infinite; }
+  @keyframes floatup { from { transform:translateY(0) rotate(0deg); } to { transform:translateY(-115vh) rotate(40deg); } }
+  .wrap, #app { position:relative; z-index:1; }
+  .mascot svg { width:100%; height:auto; display:block; }
+  .hero .mascot { width:clamp(90px,28vw,140px); margin:0 auto; }
+  .say .mascot { width:clamp(64px,18vw,96px); }
+  .spk { animation:pulse 1.6s infinite; transform-origin:104px 78px; }
+  .chars { display:flex; gap:8px; justify-content:center; margin:6px 0 12px; }
+  .ch { flex:1; min-width:0; max-width:130px; border:3px solid transparent; background:rgba(255,255,255,.7); border-radius:18px; padding:6px 4px; font:inherit; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; -webkit-appearance:none; appearance:none; color:var(--ink); }
+  .ch span { width:clamp(46px,14vw,70px); display:block; }
+  .ch span svg { width:100%; height:auto; display:block; }
+  .ch b { font-size:clamp(11px,3.2vw,14px); }
+  .ch.on { border-color:#ff6fb1; background:#fff; transform:scale(1.05); }
 </style>
 </head>
 <body>

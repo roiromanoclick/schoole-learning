@@ -256,7 +256,9 @@ if (typeof document !== 'undefined') {
   const save = d => { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* מתעלמים */ } };
   let D = load();
   D.p = D.p || {}; // התקדמות לפי עולם (0-10)
-  const PRAISE = ['כל הכבוד!', 'יופי!', 'מעולה!', 'נהדר!', 'בול!', 'וואו, נכון!'];
+  const PRAISE = ['כל הכבוד!', 'יופי!', 'מעולה!', 'נהדר!', 'וואו, נכון!'];
+  const BIG = 'וואו, את מדהימה! כל הכבוד! עוד מעט את מוכנה לכיתה א׳. איזה כיף לך!';
+  let streak = 0;
   const RETRY = ['כמעט! נסו שוב', 'לא נורא, נסו שוב', 'עוד פעם, אפשר!'];
   const prog = id => D.p[id] || 0;
   const total = () => WORLDS.reduce((s, w) => s + prog(w.id), 0);
@@ -320,17 +322,60 @@ if (typeof document !== 'undefined') {
     }
   }
 
+
+  // ----- דמויות ורקעים (ציורים מקוריים) -----
+  const CHARS = [
+    { id: 'ice', name: 'מלכת הקרח', hair: '#f3ead2', dress: '#7fd3f7', dress2: '#bdeaff', accent: '#e8f8ff', bg: 'linear-gradient(#d9f1ff,#f4e6ff)', fl: ['❄️', '✨', '💎', '⛄'], braid: true },
+    { id: 'forest', name: 'נסיכת הצמות', hair: '#b5532a', dress: '#2fb39a', dress2: '#7fe0c8', accent: '#ffd166', bg: 'linear-gradient(#dff7e6,#fff1d6)', fl: ['🌸', '🍃', '🦋', '🌷'], braid: true },
+    { id: 'pink', name: 'נסיכה אופנתית', hair: '#f6d365', dress: '#ff6fb1', dress2: '#ffb3d6', accent: '#ffe066', bg: 'linear-gradient(#ffe0f0,#ffeefb)', fl: ['💖', '🎀', '👑', '✨'], braid: false }
+  ];
+  const chById = id => CHARS.filter(c => c.id === id)[0] || CHARS[0];
+  function charSVG(c) {
+    const hairBack = c.braid
+      ? `<path d="M30 40 Q22 70 34 100 Q40 108 46 100 Q42 72 44 48 Z" fill="${c.hair}"/><circle cx="40" cy="104" r="5" fill="${c.accent}"/>`
+      : `<path d="M32 36 Q14 60 26 92 Q36 98 42 84 Q38 62 46 44 Z" fill="${c.hair}"/><path d="M88 36 Q106 60 94 92 Q84 98 78 84 Q82 62 74 44 Z" fill="${c.hair}"/>`;
+    const sideBraid = c.braid ? `<path d="M90 40 Q98 70 86 100 Q80 108 74 100 Q78 72 76 48 Z" fill="${c.hair}"/><circle cx="80" cy="104" r="5" fill="${c.accent}"/>` : '';
+    return `<svg viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${c.name}">
+      ${hairBack}${sideBraid}
+      <path d="M60 78 L22 146 Q60 156 98 146 Z" fill="${c.dress}"/>
+      <path d="M60 78 L40 146 Q60 150 80 146 Z" fill="${c.dress2}" opacity=".7"/>
+      <path d="M44 84 Q60 96 76 84 L72 76 Q60 84 48 76 Z" fill="${c.dress2}"/>
+      <rect x="53" y="66" width="14" height="14" rx="5" fill="#ffd9bd"/>
+      <ellipse cx="60" cy="48" rx="25" ry="27" fill="#ffd9bd"/>
+      <path d="M34 46 Q36 18 60 18 Q84 18 86 46 Q76 30 60 30 Q44 30 34 46 Z" fill="${c.hair}"/>
+      <path d="M46 20 L50 8 L56 16 L60 5 L64 16 L70 8 L74 20 Z" fill="${c.accent}" stroke="#f0b400" stroke-width="1.5" stroke-linejoin="round"/>
+      <ellipse cx="50" cy="50" rx="3.6" ry="4.6" fill="#3a2a5a"/><ellipse cx="70" cy="50" rx="3.6" ry="4.6" fill="#3a2a5a"/>
+      <circle cx="51.3" cy="48.4" r="1.3" fill="#fff"/><circle cx="71.3" cy="48.4" r="1.3" fill="#fff"/>
+      <circle cx="43" cy="60" r="4.5" fill="#ff9aa8" opacity=".55"/><circle cx="77" cy="60" r="4.5" fill="#ff9aa8" opacity=".55"/>
+      <path d="M52 62 Q60 70 68 62" fill="none" stroke="#c0394f" stroke-width="2.6" stroke-linecap="round"/>
+      <g class="spk"><path d="M100 70 l2.5 6 6 2.5 -6 2.5 -2.5 6 -2.5 -6 -6 -2.5 6 -2.5z" fill="#fff" stroke="${c.accent}" stroke-width="1.2"/></g>
+    </svg>`;
+  }
+  let curCh = chById(D.ch);
+  const mascotHTML = id => `<div class="mascot"${id ? ' id="' + id + '"' : ''}>${charSVG(curCh)}</div>`;
+  function setTheme() {
+    document.body.style.background = curCh.bg;
+    document.body.style.backgroundAttachment = 'fixed';
+    let bg = document.getElementById('bg');
+    if (!bg) { bg = document.createElement('div'); bg.id = 'bg'; bg.setAttribute('aria-hidden', 'true'); document.body.appendChild(bg); }
+    let h = '';
+    for (let i = 0; i < 14; i++) h += `<span style="left:${rnd(2, 95)}%;font-size:${rnd(18, 38)}px;animation-duration:${rnd(14, 28)}s;animation-delay:-${rnd(0, 24)}s">${curCh.fl[i % curCh.fl.length]}</span>`;
+    bg.innerHTML = h;
+  }
+
   // ----- מסך בית -----
   function home() {
     fx.innerHTML = '';
     if ('speechSynthesis' in window) speechSynthesis.cancel();
     const t = total();
     app.innerHTML = `<div class="wrap">
-      <div class="hero"><div class="mascot">🦊</div><h1>מתכוננים לכיתה א׳</h1><div class="total">⭐ <bdi dir="ltr">${t} / ${WORLDS.length * 10}</bdi></div></div>
+      <div class="hero">${mascotHTML()}<h1>מתכוננים לכיתה א׳</h1><div class="total">⭐ <bdi dir="ltr">${t} / ${WORLDS.length * 10}</bdi></div></div>
+      <div class="chars">${CHARS.map(c => `<button class="ch${c.id === curCh.id ? ' on' : ''}" data-id="${c.id}" aria-label="${c.name}"><span>${charSVG(c)}</span><b>${c.name}</b></button>`).join('')}</div>
       <button class="play" id="play">▶ בואו נשחק!</button>
       <div class="worlds">${WORLDS.map((w, k) => `<button class="world${prog(w.id) >= 10 ? ' done' : ''}" data-i="${k}" style="--c:${w.color};--k:${k}">
         <span class="wi">${w.icon}</span><span>${w.name}</span><span class="wp">${prog(w.id) >= 10 ? '🏆' : '⭐'} <bdi dir="ltr">${prog(w.id)}/10</bdi></span></button>`).join('')}</div>
       <div class="foot"><button class="tiny" id="mute">${D.mute ? '🔇 קול כבוי' : '🔊 קול'}</button> <button class="tiny" id="reset">🗑 איפוס</button></div></div>`;
+    app.querySelectorAll('.ch').forEach(b => { b.onclick = () => { D.ch = b.getAttribute('data-id'); save(D); curCh = chById(D.ch); setTheme(); home(); speak(curCh.name); }; });
     document.getElementById('play').onclick = () => {
       let k = WORLDS.findIndex(w => prog(w.id) < 10);
       if (k < 0) k = 0;
@@ -339,7 +384,7 @@ if (typeof document !== 'undefined') {
     };
     app.querySelectorAll('.world').forEach(b => b.onclick = () => startWorld(Number(b.dataset.i)));
     document.getElementById('mute').onclick = () => { D.mute = !D.mute; save(D); home(); };
-    document.getElementById('reset').onclick = () => { if (confirm('למחוק את כל הכוכבים ולהתחיל מחדש?')) { D = { p: {}, mute: D.mute }; save(D); home(); } };
+    document.getElementById('reset').onclick = () => { if (confirm('למחוק את כל הכוכבים ולהתחיל מחדש?')) { D = { p: {}, mute: D.mute, ch: D.ch }; save(D); home(); } };
   }
 
   // ----- שאלות -----
@@ -355,7 +400,7 @@ if (typeof document !== 'undefined') {
     const stars = Array.from({ length: 10 }, (_, j) => `<span class="${j < S.i ? 'on' : ''}">⭐</span>`).join('');
     app.innerHTML = `<div class="wrap" style="--c:${w.color}">
       <div class="bar"><button class="rb" id="homeb" aria-label="בית">🏠</button><div class="stars" id="stars">${stars}</div><button class="rb small" id="mutes">${D.mute ? '🔇' : '🔊'}</button></div>
-      <div class="say"><div class="mascot" id="mascot">🦊</div><div class="bubble"><span>${q.say}</span><button class="rb small" id="rep" aria-label="שמעו שוב">🔊</button></div></div>
+      <div class="say">${mascotHTML("mascot")}<div class="bubble"><span>${q.say}</span><button class="rb small" id="rep" aria-label="שמעו שוב">🔊</button></div></div>
       <div class="visual" id="vis">${q.vis}</div>
       <div class="opts ${q.cls}" id="opts">${q.opts.map((o, j) => `<button class="opt" data-j="${j}">${o.h}</button>`).join('')}</div>
       <div class="msg" id="msg"></div>
@@ -381,17 +426,20 @@ if (typeof document !== 'undefined') {
       S.locked = true;
       btn.classList.add('good');
       app.querySelectorAll('.opt').forEach(b => { b.disabled = true; });
-      const p = pick(PRAISE);
+      streak = S.tries === 0 ? streak + 1 : 0;
+      const big = streak >= 6;
+      if (big) streak = 0;
+      const p = big ? BIG : pick(PRAISE);
       msg.className = 'msg'; msg.textContent = p + ' 🎉';
       mascot.className = 'mascot happy';
       const st = document.querySelectorAll('#stars span')[S.i];
       st.className = 'on pop';
       const id = WORLDS[S.k].id;
       if (prog(id) < S.i + 1) { D.p[id] = S.i + 1; save(D); }
-      sfxOk(); speak(p); confetti(S.i === S.qs.length - 1 ? 40 : 14);
+      sfxOk(); speak(p); confetti(big ? 70 : S.i === S.qs.length - 1 ? 40 : 14);
       const nx = document.getElementById('next'); nx.hidden = false;
     } else {
-      S.tries++;
+      S.tries++; streak = 0;
       btn.classList.add('bad'); btn.disabled = true;
       msg.className = 'msg try'; msg.textContent = pick(RETRY);
       mascot.className = 'mascot sad';
@@ -417,6 +465,7 @@ if (typeof document !== 'undefined') {
     document.getElementById('homeb').onclick = home;
   }
 
+  setTheme();
   home();
 } else {
   module.exports = { WORLDS };
