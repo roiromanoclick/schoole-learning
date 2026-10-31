@@ -6,6 +6,7 @@ at `https://roiromanoclick.github.io/schoole-learning/<project>/`.
 | Project | Description |
 |---|---|
 | [math-review-grade4](math-review-grade4/) | Hebrew (RTL) math review for 4th grade — works offline (PWA) |
+| [grade1-prep](grade1-prep/) | Hebrew (RTL) kindergarten→grade 1 prep for ages ~5 — 100 picture questions in 10 worlds (letters, sounds, numbers, counting, add/subtract, shapes, colors, comparisons, patterns, world), voice read-aloud, no test/scores — works offline (PWA) |
 | [math-review-grade6](math-review-grade6/) | Hebrew (RTL) math & geometry review for 6th grade — fractions (as division, multiply, divide), prisms, word problems — works offline (PWA) |
 
 Adding a project: create a new sub-folder with its own `index.html`, and add a card to the root `index.html`.
