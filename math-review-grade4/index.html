@@ -98,6 +98,52 @@
   .vg td.cross:hover { background:#fee2e2; }
   .vg td.cross.x { color:#dc2626; text-decoration:line-through; text-decoration-thickness:4px; }
   .big { font-size:60px; }
+  html { -webkit-text-size-adjust:100%; }
+  body { overflow-x:hidden; }
+  button, .topic, .opt, .dot { touch-action:manipulation; }
+  svg { max-width:100%; height:auto; }
+  @media (max-width:600px) {
+    body { font-size:19px; }
+    header { font-size:21px; padding:10px 12px; }
+    main { padding:10px; }
+    .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .topic { padding:10px 6px; border-width:2px; }
+    .topic .ic { font-size:30px; }
+    .topic .nm { font-size:17px; margin:4px 0; }
+    .topic .best { font-size:14px; }
+    .topic .tick { font-size:14px !important; padding:0 8px; height:26px; line-height:26px; width:auto; }
+    .mock { font-size:19px; padding:12px; }
+    .card { padding:12px; border-radius:14px; }
+    .top { font-size:15px; flex-wrap:wrap; gap:6px; }
+    button.menu { font-size:15px; padding:6px 10px; }
+    .dots { gap:3px; margin-bottom:10px; }
+    .dot { width:30px; height:30px; font-size:14px; }
+    .prompt { font-size:21px; line-height:1.5; }
+    .words { font-size:21px; padding:8px; }
+    .hint { font-size:15px; }
+    .vert { font-size:26px; padding:8px 12px; }
+    .vg td { width:min(62px,11vw); height:min(60px,11vw); font-size:min(42px,7.5vw); }
+    .vg td.op { width:min(52px,8vw); font-size:min(46px,8vw); }
+    .vg .cr { font-size:min(24px,4.5vw); }
+    .vg input[type=text] { width:min(56px,10vw); font-size:min(36px,7vw); }
+    .vg input.scratch { width:min(58px,10vw); font-size:min(22px,4.5vw); }
+    input[type=text] { font-size:26px; width:130px; padding:6px; }
+    .answers { gap:8px; }
+    .answers label { font-size:16px; }
+    .opt { font-size:20px; padding:10px; }
+    button.go { font-size:19px; padding:10px 14px; }
+    .nav { gap:8px; }
+    .nav button.go { flex:1; }
+    button.ghost { font-size:16px; }
+    .fb { font-size:18px; padding:10px; }
+    .demo { padding:10px; }
+    .demo-body { font-size:20px; }
+    .demo .vert { font-size:24px; }
+    .demo .go { font-size:16px; padding:8px 10px; }
+    .big { font-size:48px; }
+    table.res td { padding:5px 8px; font-size:17px; }
+    .dlg { padding:16px; }
+  }
 </style>
 </head>
 <body>
